@@ -1,14 +1,14 @@
-import { FileUpload } from "@/components/FileUpload";
 import { Chat } from "@/components/Chat";
+import { FileUpload } from "@/components/FileUpload";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <header>
-          <h1 className="text-4xl font-bold text-primary">NDT Data Assistant</h1>
+          <h1 className="text-4xl font-bold text-primary">Virgil-Troubleshoot</h1>
           <p className="text-muted-foreground mt-2">
-            Upload your NDT data and get AI-powered insights
+            AI-powered insights built by Cruz Wootten & Amber McCollum
           </p>
         </header>
 

@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { Send } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { Send } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface Message {
   id: number;
   text: string;
-  sender: "user" | "assistant";
+  sender: "user" | "Virgil";
 }
 
 interface NDTFile {
@@ -42,8 +42,8 @@ export const Chat = () => {
         setMessages([
           {
             id: Date.now(),
-            text: `I see you have ${data.length} NDT file(s) uploaded. How can I help you analyze them?`,
-            sender: "assistant"
+            text: `I see you have ${data.length} file(s) uploaded. Using this data, how can I help you?`,
+            sender: "Virgil"
           }
         ]);
       }
@@ -66,7 +66,7 @@ export const Chat = () => {
             {
               id: Date.now(),
               text: `New file "${(payload.new as NDTFile).filename}" has been uploaded. Would you like me to analyze it?`,
-              sender: "assistant"
+              sender: "Virgil"
             }
           ]);
         }
@@ -87,26 +87,58 @@ export const Chat = () => {
       text: input,
       sender: "user",
     };
-
     setMessages(prev => [...prev, userMessage]);
     setInput("");
 
-    // Simulate AI response about the files
-    const assistantMessage: Message = {
-      id: Date.now() + 1,
-      text: `I'll help you analyze the NDT data. What specific aspects would you like to know about the ${files.length} uploaded file(s)?`,
-      sender: "assistant",
-    };
+    try {
+      // Show loading state
+      const loadingMessage: Message = {
+        id: Date.now() + 1,
+        text: "Analyzing your request...",
+        sender: "Virgil",
+      };
+      setMessages(prev => [...prev, loadingMessage]);
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
+      // Call the API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          files: files,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Replace loading message with actual response
+      setMessages(prev => [
+        ...prev.filter(msg => msg.id !== loadingMessage.id),
+        {
+          id: Date.now() + 2,
+          text: data.response,
+          sender: "Virgil",
+        },
+      ]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [
+        ...prev.filter(msg => msg.id !== loadingMessage.id),
+        {
+          id: Date.now() + 2,
+          text: "I apologize, but I encountered an error processing your request.",
+          sender: "Virgil",
+        },
+      ]);
+    }
   };
 
   return (
     <Card className="flex flex-col h-[600px]">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">AI Assistant</h2>
+        <h2 className="text-lg font-semibold">AI Virgil</h2>
         <p className="text-sm text-muted-foreground">
           {files.length} file(s) available for analysis
         </p>
@@ -140,7 +172,7 @@ export const Chat = () => {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your NDT data..."
+            placeholder="Ask..."
             className="min-h-[60px]"
           />
           <Button type="submit" className="bg-primary text-primary-foreground">
