@@ -9,7 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ndt_files: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          data: Json | null
+          file_path: string
+          filename: string
+          id: string
+          processed: boolean | null
+          size: number | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          data?: Json | null
+          file_path: string
+          filename: string
+          id?: string
+          processed?: boolean | null
+          size?: number | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          data?: Json | null
+          file_path?: string
+          filename?: string
+          id?: string
+          processed?: boolean | null
+          size?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
