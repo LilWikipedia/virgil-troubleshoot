@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Send } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -18,16 +19,24 @@ interface NDTFile {
   file_path: string;
   processed: boolean;
   created_at: string;
+  content_type?: string;
+  size?: number;
+  data?: any;
 }
 
 export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<NDTFile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchFiles();
-    subscribeToFiles();
+    const unsubscribe = subscribeToFiles();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const fetchFiles = async () => {
@@ -80,7 +89,7 @@ export const Chat = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now(),
@@ -89,17 +98,9 @@ export const Chat = () => {
     };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    setIsLoading(true);
 
     try {
-      // Show loading state
-      const loadingMessage: Message = {
-        id: Date.now() + 1,
-        text: "Analyzing your request...",
-        sender: "Virgil",
-      };
-      setMessages(prev => [...prev, loadingMessage]);
-
-      // Call the API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -111,27 +112,37 @@ export const Chat = () => {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
       const data = await response.json();
 
-      // Replace loading message with actual response
       setMessages(prev => [
-        ...prev.filter(msg => msg.id !== loadingMessage.id),
+        ...prev,
         {
-          id: Date.now() + 2,
+          id: Date.now(),
           text: data.response,
           sender: "Virgil",
         },
       ]);
     } catch (error) {
       console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get a response. Please try again.",
+        variant: "destructive",
+      });
       setMessages(prev => [
-        ...prev.filter(msg => msg.id !== loadingMessage.id),
+        ...prev,
         {
-          id: Date.now() + 2,
-          text: "I apologize, but I encountered an error processing your request.",
+          id: Date.now(),
+          text: "I apologize, but I encountered an error processing your request. Please try again.",
           sender: "Virgil",
         },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,8 +185,13 @@ export const Chat = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask..."
             className="min-h-[60px]"
+            disabled={isLoading}
           />
-          <Button type="submit" className="bg-primary text-primary-foreground">
+          <Button 
+            type="submit" 
+            className="bg-primary text-primary-foreground"
+            disabled={isLoading}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>
