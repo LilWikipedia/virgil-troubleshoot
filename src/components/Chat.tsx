@@ -101,22 +101,14 @@ export const Chat = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
           message: input,
           files: files,
-        }),
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
+      if (error) throw error;
 
       setMessages(prev => [
         ...prev,
